@@ -18,6 +18,7 @@ class Camera(BaseModel):
     pos_inf_x = models.IntegerField(null=True)
     pos_inf_y = models.IntegerField(null=True)
     places = models.IntegerField(null=False, default=1)
+    active = models.BooleanField(null=False, default=True)
 
     def __str__(self):
         return f'{type(self).__name__}({", ".join("%s=%s" % item for item in vars(self).items() if item[0][0] != "_")})'
