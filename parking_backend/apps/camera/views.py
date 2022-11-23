@@ -1,13 +1,16 @@
+import threading
+
+from django.http import StreamingHttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
+from parking_backend.apps.camera.core.compressing_streaming import compressing_streaming
+from parking_backend.apps.camera.core.video_camera import VideoCamera
+from parking_backend.apps.camera.core.video_processing import video_processing
 from parking_backend.apps.camera.models import Camera
 from parking_backend.apps.camera.serializers import CameraSerializer
-
-from django.views.decorators import gzip
-from parking_backend.apps.camera.Code import VideoCamara as vc
-from django.http import StreamingHttpResponse
-from django.shortcuts import render
 
 
 # Create your views here.
@@ -33,14 +36,43 @@ class CameraRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = CameraSerializer
 
 
-@gzip.gzip_page
-def ipCamara(request):
-    # return render(request,'Camara/index.html')
-    ###########################################
-    try:
-        cam = vc.VideoCamara()
-        return StreamingHttpResponse(vc.gen(cam), content_type="multipart/x-mixed-replace;boundary=frame")
-    except:
-        pass
-    #return render(request, 'index.html')
-    ###########################################
+class CameraStreamingAPIView(APIView):
+    def get(self, request):
+        seconds = int(self.request.query_params.get('seconds', 4))
+        url_camera = self.request.query_params.get('url_camera', 0)
+        try:
+            cam = VideoCamera(url_camera)
+            return StreamingHttpResponse(
+                compressing_streaming(cam, seconds),
+                content_type="multipart/x-mixed-replace;boundary=frame"
+            )
+        except:
+            pass
+
+
+class CameraProcessingRunningAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user:
+            cameras = Camera.objects.filter(parking_place__user=2)
+        else:
+            cameras = Camera.objects.filter(parking_place__user=request.user)
+        for camera in cameras:
+            if camera.ip_cam == "0.0.0.0":
+                capture_camera = VideoCamera(0)
+            else:
+                capture_camera = VideoCamera(camera.ip_cam)
+            threading.Thread(
+                target=self.processing_video_streaming_thread,
+                args=[camera, capture_camera]
+            ).start()
+        return "Thread Inicializado"
+
+    @staticmethod
+    def processing_video_streaming_thread(camera_data, capture_camera):
+        while True:
+            nro_plazas = video_processing(capture_camera.frame)
+            # Actualizar
+            camera_data.places = nro_plazas
+            camera_data.save()
