@@ -5,6 +5,7 @@ import cv2
 
 class VideoCamera(object):
     def __init__(self, address):
+        #self.video = cv2.VideoCapture('rtsp://admin:XLKAWA@192.168.0.6/video')
         self.video = cv2.VideoCapture(address)
         (self.grabbed, self.frame) = self.video.read()
 

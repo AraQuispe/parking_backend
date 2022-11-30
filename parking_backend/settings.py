@@ -29,11 +29,14 @@ ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOW_METHODS = list(default_methods)
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://192.168.1.110:8080",  # BUG Regex
-]
+#CORS_ALLOWED_ORIGINS = [
+#    "http://localhost:8080",
+#    "http://127.0.0.1:8080",
+#    "http://192.168.1.110:8080",  # BUG Regex,
+#    "http://192.168.2.3:45608"
+#]
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
