@@ -14,6 +14,9 @@ from parking_backend.apps.camera.serializers import CameraSerializer
 
 
 # Create your views here.
+from parking_backend.apps.parking_place.models import ParkingPlace
+
+
 class CameraListCreateAPIView(ListCreateAPIView):
     queryset = Camera.objects.all()
     serializer_class = CameraSerializer
@@ -56,17 +59,25 @@ class CameraProcessingRunningAPIView(APIView):
     def get(self, request):
         if request.user:
             cameras = Camera.objects.filter(parking_place__user=2)
+            parking = ParkingPlace.objects.get(user=2)
         else:
             cameras = Camera.objects.filter(parking_place__user=request.user)
+            parking = ParkingPlace.objects.get(user=2)
+
         for camera in cameras:
-            if camera.ip_cam == "0.0.0.0":
-                capture_camera = VideoCamera(0)
-            else:
-                capture_camera = VideoCamera(camera.ip_cam)
-            threading.Thread(
-                target=self.processing_video_streaming_thread,
-                args=[camera, capture_camera]
-            ).start()
+            if camera.active:
+                if camera.ip_cam == "0.0.0.0":
+                    capture_camera = VideoCamera(0)
+                else:
+                    capture_camera = VideoCamera(camera.ip_cam)
+                threading.Thread(
+                    target=self.processing_video_streaming_thread,
+                    args=[camera, capture_camera]
+                ).start()
+        threading.Thread(
+            target=self.set_available_places_parking_thread,
+            args=[cameras, parking]
+        ).start()
         return "Thread Inicializado"
 
     @staticmethod
@@ -76,3 +87,12 @@ class CameraProcessingRunningAPIView(APIView):
             # Actualizar
             camera_data.places = nro_plazas
             camera_data.save()
+
+    @staticmethod
+    def set_available_places_parking_thread(cameras_data, parking):
+        while True:
+            nro_plazas = 0
+            for camera in cameras_data:
+                nro_plazas += camera.places
+            parking.available = nro_plazas
+            parking.save()

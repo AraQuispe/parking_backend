@@ -1,5 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, RetrieveAPIView
 
 from parking_backend.apps.parking_place.models import ParkingPlace
 from parking_backend.apps.parking_place.serializers import ParkingPlaceSerializer
@@ -35,3 +35,10 @@ class ParkingPlaceListAPIView(ListAPIView):
         'user',
         'name'
     ]
+
+
+class ParkingPlaceRetrieveAPIView(RetrieveAPIView):
+    queryset = ParkingPlace.objects.all()
+    serializer_class = ParkingPlaceSerializer
+    authentication_classes = []  # disables authentication
+    permission_classes = []  # disables permission

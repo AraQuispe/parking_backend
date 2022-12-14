@@ -3,32 +3,25 @@ import numpy as np
 
 
 def video_processing(frame):
-    amarillo_claro = np.array([22, 93, 0], np.uint8)
-    amarillo_oscuro = np.array([45, 255, 255], np.uint8)
-    # 1.Conversion a Escala de Grises
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(gray, amarillo_claro, amarillo_oscuro)
+    yellow_lower = np.array([22, 60, 200], np.uint8)
+    yellow_upper = np.array([60, 255, 255], np.uint8)
 
+    frameHSV = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    yellow = cv2.inRange(frameHSV, yellow_lower, yellow_upper)
     # Eliminamos el posible ruido
-    kernel_1 = np.ones((10, 10), np.uint8)
-    mascara = cv2.erode(mask, kernel_1, iterations=2)
-    mascara = cv2.dilate(mascara, kernel_1, iterations=2)
+    kernel_1 = np.ones((5, 5), np.uint8)
+    yellow = cv2.dilate(yellow, kernel_1)
+    res_yellow = cv2.bitwise_and(frame, frame, mask=yellow)
 
-    contornos, _ = cv2.findContours(mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Numero de plazas
+    # Tracking yellow
     total = 0
-    for c in contornos:
-        area = cv2.contourArea(c)
-        # print("area", area)
-        if area > 1700:
-            # aproximacion de contorno
-            peri = cv2.arcLength(c, True)  # Perimetro
-            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-            # Si la aproximacion tiene 4 vertices correspondera a un rectangulo
-            if len(approx) == 4:
-                # cv2.drawContours(frame, [approx], -1, (0, 255, 0), 3, cv2.LINE_AA)
-                total += 1
+    contours, hierarchy = cv2.findContours(yellow, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    for pic, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if (area > 6000):
+            x, y, w, h = cv2.boundingRect(contour)
+            img = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            total += 1
 
     # 5.Poner texto en imagen
     # letrero = 'Plazas: ' + str(total)
