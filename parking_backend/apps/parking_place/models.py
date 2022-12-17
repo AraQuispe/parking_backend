@@ -13,8 +13,6 @@ class ParkingPlace(BaseModel):
     latitude = models.DecimalField(null=False, decimal_places=10, max_digits=13)
     longitude = models.DecimalField(null=False, decimal_places=10, max_digits=13)
     address = models.TextField(null=False, blank=False, max_length=128)
-    #opening_time = models.TimeField(null=False, blank=False)
-    #closing_time = models.TimeField(null=False, blank=False)
     opening_time = models.TextField(null=False, blank=False, max_length=15)
     closing_time = models.TextField(null=False, blank=False, max_length=15)
     description = models.TextField(null=False, blank=False, max_length=256)
